@@ -1,3 +1,14 @@
+# _documents files
+
+# _tools files
+STM32Cube_FW_F1_V1.8.0
+
+# Project files
+Drivers
+MDK-ARM
+*.mxproject
+*.ioc
+
 # Prerequisites
 *.d
 
