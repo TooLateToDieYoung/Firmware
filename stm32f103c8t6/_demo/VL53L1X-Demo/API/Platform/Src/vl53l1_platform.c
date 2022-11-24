@@ -38,16 +38,74 @@
 #include <time.h>
 #include <math.h>
 
+#include "InterfaceI2C.h"
+#include "stm32f1xx_ll_utils.h"
+
 int8_t VL53L1_WriteMulti( uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t count) {
-	return __W_Series(dev, index, pdata, count, 0); // to be implemented
+
+	if( count == 0 ) return Success;
+
+	// I2C wire start: SDA low -> SCL low
+  _InterfaceI2C_Start(I2C1);
+
+	// device address: direction write
+  _InterfaceI2C_Device(I2C1, dev, DirW, Invalid);
+	
+	// index register, which length is 16 bits
+	_InterfaceI2C_TxByte(I2C1, ( ( index & 0xFF00 ) >> 8 ));
+	_InterfaceI2C_TxByte(I2C1, ( index & 0x00FF ));
+	
+	// tranfer datas
+  for(uint32_t i = 0; i < count; ++i) _InterfaceI2C_TxByte(I2C1, pdata[i]);
+
+	// I2C wire stop: SCL high -> SDA high
+  _InterfaceI2C_Stop(I2C1);
+
+	return Success;
 }
 
 int8_t VL53L1_ReadMulti(uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t count){
-	return __R_Series(dev, index, pdata, count, 0); // to be implemented
+
+	if( count == 0 ) return Success;
+
+  I2C_AckType_Enum type = ( count > 1 ) ? ( Ack ) : ( Nack ) ;
+
+	// I2C wire start: SDA low -> SCL low
+  _InterfaceI2C_Start(I2C1);
+
+	// device address: direction write (to index register)
+  _InterfaceI2C_Device(I2C1, dev, DirW, Invalid);
+
+	// index register, which length is 16 bits
+	_InterfaceI2C_TxByte(I2C1, ( ( index & 0xFF00 ) >> 8 ));
+	_InterfaceI2C_TxByte(I2C1, ( index & 0x00FF ));
+
+	// I2C wire stop: SCL high -> SDA high
+	_InterfaceI2C_Stop(I2C1);
+	
+	// I2C wire restart
+  _InterfaceI2C_Start(I2C1);
+	
+	// device address: direction read
+  _InterfaceI2C_Device(I2C1, dev, DirR, type);
+
+	// receive datas: 0 to ( last - 1 )
+  for(uint32_t i = 0; type == Ack; ++i) {
+    if( i + 2 >= count ) type = Nack;
+    _InterfaceI2C_RxByte(I2C1, &pdata[i], type);
+  }
+	
+	// I2C wire stop: SCL high -> SDA high
+  _InterfaceI2C_Stop(I2C1);
+
+	// receive last data
+  _InterfaceI2C_RxByte(I2C1, &pdata[count-1], Nack);
+
+	return Success;
 }
 
 int8_t VL53L1_WrByte(uint16_t dev, uint16_t index, uint8_t data) {
-	return __W_Series(dev, index, &data, 1, 0); // to be implemented
+	return VL53L1_WriteMulti(dev, index, &data, 1); // to be implemented
 }
 
 int8_t VL53L1_WrWord(uint16_t dev, uint16_t index, uint16_t data) {
@@ -56,7 +114,7 @@ int8_t VL53L1_WrWord(uint16_t dev, uint16_t index, uint16_t data) {
   array[0] = (uint8_t)( ( data & 0xFF00U ) >> 8 );
   array[1] = (uint8_t)( data & 0x00FFU );
 
-	return __W_Series(dev, index, array, 2, 0); // to be implemented
+	return VL53L1_WriteMulti(dev, index, array, 2); // to be implemented
 }
 
 int8_t VL53L1_WrDWord(uint16_t dev, uint16_t index, uint32_t data) {
@@ -67,18 +125,18 @@ int8_t VL53L1_WrDWord(uint16_t dev, uint16_t index, uint32_t data) {
   array[2] = (uint8_t)( ( data & 0x0000FF00U ) >>  8 );
   array[3] = (uint8_t)( ( data & 0x000000FFU ) >>  0 );
 
-	return __W_Series(dev, index, array, 4, 0); // to be implemented
+	return VL53L1_WriteMulti(dev, index, array, 4); // to be implemented
 }
 
 int8_t VL53L1_RdByte(uint16_t dev, uint16_t index, uint8_t *data) {
-	return __R_Series(dev, index, data, 1, 0); // to be implemented
+	return VL53L1_ReadMulti(dev, index, data, 1); // to be implemented
 }
 
 int8_t VL53L1_RdWord(uint16_t dev, uint16_t index, uint16_t *data) {
 	
 	uint8_t array[2] = {0};
 	
-	__R_Series(dev, index, array, 2, 0);
+	VL53L1_ReadMulti(dev, index, array, 2);
 	
 	*data = (uint16_t)( 
 		(uint16_t)( array[0] << 8 ) |
@@ -92,7 +150,7 @@ int8_t VL53L1_RdDWord(uint16_t dev, uint16_t index, uint32_t *data) {
 	
 	uint8_t array[4] = {0};
 	
-	__R_Series(dev, index, array, 4, 0);
+	VL53L1_ReadMulti(dev, index, array, 4);
 	
 	*data = (uint32_t)( 
 		(uint32_t)( array[0] << 24 ) |

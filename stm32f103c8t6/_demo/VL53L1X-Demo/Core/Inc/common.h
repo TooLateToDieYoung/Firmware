@@ -28,6 +28,7 @@ typedef uint32_t size_t;
 typedef uint32_t pin_t;
 
 typedef enum { False = 0, True = !False } bool_t;
+typedef enum { Success, Fail = !Success } task_t;
 
 typedef struct {
   GPIO_TypeDef * GPIOx;
