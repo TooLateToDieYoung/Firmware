@@ -1,3 +1,15 @@
+/**
+ * @file InterfaceSPI.h
+ * @author Zhang, Zhen Yu (https://github.com/TooLateToDieYoung)
+ * @brief
+ * @warning
+ * @version 0.1
+ * @date 2022-11-24
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #ifndef _INTERFACE_SPI_H_
 #define _INTERFACE_SPI_H_
 
@@ -14,13 +26,33 @@ extern "C" {
 #elif defined( STM32F103xF ) || defined( STM32F103xG )
   #include "stm32f103xg.h"
 #else
-  #define UNREADY
+  #define SPI_UNREADY
   #warning "This library must be working under stm32f1xx series"
 #endif
 
-#ifndef UNREADY
+#ifndef SPI_UNREADY
 
 #include "common.h"
+
+/** Interface Begin --------------------------------------------------------------------
+ * @brief 
+ * | Almost directly through the register operation. \n
+ * | For each function, they provide an alternative, \n 
+ * | with the same functionality, implemented with the LL library.
+ * 
+ * @warning Do not change these codes, it may cause errors
+ */
+
+/* ---------------------------------------------------------------- Interface Code End */
+
+/** Demo Code Begin --------------------------------------------------------------------
+ * @brief 
+ * | The following is the demo code for standard I2C communication protocol \n
+ * | Users can rewrite the content of the function according to \n
+ * | their own needs, or customize new functions
+ */
+
+/* --------------------------------------------------------------------- Demo Code End */
 
 #endif // UNREADY
 

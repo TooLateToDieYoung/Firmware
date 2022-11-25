@@ -49,14 +49,6 @@ typedef enum { UART_MAIN_THREAD, UART_INTERRUPT } InterfaceUART_ThreadType_Enum;
  * @warning Do not change these codes, it may cause errors
  */
 
-/**
- * @brief 
- * 
- * @param USARTx 
- * @param byte 
- * @param thread 
- * @return task_t 
- */
 static inline task_t _InterfaceUART_TxByte(USART_TypeDef * USARTx, uint8_t byte, InterfaceUART_ThreadType_Enum thread)
 {
   switch( thread ) {
@@ -74,25 +66,17 @@ static inline task_t _InterfaceUART_TxByte(USART_TypeDef * USARTx, uint8_t byte,
   }
 }
 
-/**
- * @brief 
- * 
- * @param USARTx 
- * @param byte 
- * @param thread 
- * @return task_t 
- */
 static inline task_t _InterfaceUART_RxByte(USART_TypeDef * USARTx, volatile uint8_t * byte, InterfaceUART_ThreadType_Enum thread)
 {
   switch( thread ) {
     case UART_MAIN_THREAD: {
       while( !_MASK(USARTx->SR, _BIT(5)) ) { }
-      *byte = (volatile uint8_t)USARTx->DR;
+      *byte = (uint8_t)USARTx->DR;
       return Success;
     }
     case UART_INTERRUPT: { // ? Not sure if it works
       if( !_MASK(USARTx->SR, _BIT(5)) ) return Fail;
-      *byte = (volatile uint8_t)USARTx->DR;
+      *byte = (uint8_t)USARTx->DR;
       return Success;
     }
     default: return Fail;

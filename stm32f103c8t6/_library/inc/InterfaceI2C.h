@@ -214,7 +214,7 @@ static inline task_t _InterfaceI2C_Stop(I2C_TypeDef * I2Cx)
  * @param len: array length
  * @return task_t: Success / Fail 
  *//*
-static inline task_t __W_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t array[], uint32_t len)
+static inline task_t __W_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t array[], size_t len)
 {
   if( len == 0 ) return Success;
 
@@ -222,7 +222,7 @@ static inline task_t __W_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t arra
 
   __Device(I2Cx, device, DirW, Invalid);
 
-  for(uint32_t i = 0; i < len; ++i) __TxByte(I2Cx, array[i]);
+  for(size_t i = 0; i < len; ++i) __TxByte(I2Cx, array[i]);
 
   __Stop(I2Cx);
 
@@ -239,7 +239,7 @@ static inline task_t __W_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t arra
  * @param len: array length
  * @return task_t: Success / Fail 
  *//*
-static inline task_t __R_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t array[], uint32_t len)
+static inline task_t __R_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t array[], size_t len)
 {
   if( len == 0 ) return Success;
 
@@ -249,7 +249,7 @@ static inline task_t __R_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t arra
 
   __Device(I2Cx, device, DirR, type);
 
-  for(uint32_t i = 0; type == Ack; ++i) {
+  for(size_t i = 0; type == Ack; ++i) {
     if( i + 2 >= len ) type = Nack;
     __RxByte(I2Cx, &array[i], type);
   }
