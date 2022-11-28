@@ -1,8 +1,10 @@
 #include "hc05.h"
 #include <stdlib.h>
 
-/**
- * @brief Queue-like data structure for uart rx and tx buffers
+#ifndef HC05_UNREADY
+
+/** Forward Declarations for private data structure & functions
+ * @brief Queue-like data structure for USART rx and tx buffers
  * 
  */
 typedef struct {
@@ -41,6 +43,15 @@ static task_t _Buffer_Pop(buffer_t * const self, volatile uint8_t * byte)
 
   self->head++;
   
+  return Success;
+}
+
+static task_t _Buffer_Peek(buffer_t * const self, volatile uint8_t * byte)
+{
+  if( self->head >= self->tail ) return Fail; // has been touched end
+
+  *byte = self->array[self->head];
+
   return Success;
 }
 
@@ -132,32 +143,42 @@ task_t HC05_getRxDatas(HC05_DS * const self, volatile uint8_t array[], volatile 
  * @brief Transfer one byte
  * 
  * @param self: object pointer 
- * @param thread: indicates that the caller is from the main thread or an interrupt
+ * @param timeout: set try times
  * @return task_t: Success / Fail 
  */
-task_t HC05_TxByte(HC05_DS * const self, InterfaceUART_ThreadType_Enum thread)
+task_t HC05_TxByte(HC05_DS * const self, uint16_t timeout)
 {
   uint8_t byte = 0;
 
-  if( _Buffer_Pop(&self->tx, &byte) != Success ) return Fail;
+  if( _Buffer_Peek(&self->tx, &byte) != Success ) return Fail;
 
-  return _InterfaceUART_TxByte(self->USARTx, byte, thread);
+  do {
+    if( 
+      _InterfaceUSART_TxByte(self->USARTx, byte) == Success 
+    ) return _Buffer_Pop(&self->tx, &byte);
+  } while( timeout-- );
+
+  return Fail;
 }
 
 /**
- * @brief Receive one byte
+ * @brief Transfer one byte
  * 
  * @param self: object pointer 
- * @param thread: indicates that the caller is from the main thread or an interrupt
+ * @param timeout: set try times
  * @return task_t: Success / Fail 
  */
-task_t HC05_RxByte(HC05_DS * const self, InterfaceUART_ThreadType_Enum thread)
+task_t HC05_RxByte(HC05_DS * const self, uint16_t timeout)
 {
   uint8_t byte = 0;
 
-  if( _InterfaceUART_RxByte(self->USARTx, &byte, thread) != Success ) return Fail;
+  do {
+    if( 
+      _InterfaceUSART_RxByte(self->USARTx, &byte) == Success 
+    ) return _Buffer_Push(&self->rx, byte);
+  } while( timeout-- );
 
-  return _Buffer_Push(&self->rx, byte);
+  return Fail;
 }
 
 /**
@@ -175,16 +196,16 @@ bool_t HC05_isTxDone(HC05_DS * const self)
  * @brief This set of data has been received
  * 
  * @param self: object pointer 
+ * @param check: compare the last few bytes according to user needs
+ * @param size: length to compare
  * @return bool_t: True / False
  */
-bool_t HC05_isRxDone(HC05_DS * const self)
+bool_t HC05_isRxDone(HC05_DS * const self, const uint8_t check[], size_t size)
 {
-  if( _Buffer_Length(&self->rx) < 4 ) return False;
+  if( _Buffer_Length(&self->rx) < size ) return False;
 
-  if( self->rx.array[self->rx.tail - 1] != '\n' ) return False;
-  if( self->rx.array[self->rx.tail - 2] != '\r' ) return False;
-  if( self->rx.array[self->rx.tail - 3] !=  'K' ) return False;
-  if( self->rx.array[self->rx.tail - 4] !=  'O' ) return False;
+  for(size_t i = 1; i <= size;++i)
+    if( self->rx.array[self->rx.tail - i] != check[size - i] ) return False;
 
   return True;
 }
@@ -202,14 +223,21 @@ task_t HC05_DiscardPacket(HC05_DS * const self)
 /**
  * @brief Clear residual data
  * 
- * @param self: object pointer 
+ * @param self: object pointer
+ * @param timeout: set try times
  * @return bool_t: True / False
  */
-task_t HC05_ClearResidualData(HC05_DS * const self)
+task_t HC05_ClearResidualData(HC05_DS * const self, uint16_t timeout)
 {
   uint8_t byte = 0;
-  
-  _InterfaceUART_RxByte(self->USARTx, &byte, UART_INTERRUPT);
+
+  do {
+    if( 
+      _InterfaceUSART_RxByte(self->USARTx, &byte) == Success
+    ) return Success;
+  } while( timeout-- );
 
   return Success;
 }
+
+#endif // HC05_UNREADY

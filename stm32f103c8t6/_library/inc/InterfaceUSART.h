@@ -1,5 +1,5 @@
 /**
- * @file InterfaceUART.h
+ * @file InterfaceUSART.h
  * @author Zhang, Zhen Yu (https://github.com/TooLateToDieYoung)
  * @brief
  * @warning
@@ -10,8 +10,8 @@
  * 
  */
 
-#ifndef _INTERFACE_UART_H_
-#define _INTERFACE_UART_H_
+#ifndef _INTERFACE_USART_H_
+#define _INTERFACE_USART_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,19 +26,13 @@ extern "C" {
 #elif defined( STM32F103xF ) || defined( STM32F103xG )
   #include "stm32f103xg.h"
 #else
-  #define UART_UNREADY
+  #define USART_UNREADY
   #warning "This library must be working under stm32f1xx series"
 #endif
 
-#ifndef UART_UNREADY
+#ifndef USART_UNREADY
 
 #include "common.h"
-
-/**
- * @brief indicates that the caller is from the main thread or an interrupt
- * 
- */
-typedef enum { UART_MAIN_THREAD, UART_INTERRUPT } InterfaceUART_ThreadType_Enum;
 
 /** Interface Begin --------------------------------------------------------------------
  * @brief 
@@ -49,38 +43,40 @@ typedef enum { UART_MAIN_THREAD, UART_INTERRUPT } InterfaceUART_ThreadType_Enum;
  * @warning Do not change these codes, it may cause errors
  */
 
-static inline task_t _InterfaceUART_TxByte(USART_TypeDef * USARTx, uint8_t byte, InterfaceUART_ThreadType_Enum thread)
+/**
+ * @brief 
+ * 
+ * @param USARTx 
+ * @param byte 
+ * @param thread 
+ * @return task_t 
+ */
+static inline task_t _InterfaceUSART_TxByte(USART_TypeDef * USARTx, uint8_t byte)
 {
-  switch( thread ) {
-    case UART_MAIN_THREAD: {
-      USARTx->DR = byte;
-      while( !_MASK(USARTx->SR, _BIT(6)) ) { }
-      return Success;
-    }
-    case UART_INTERRUPT: { // ? Not sure if it works
-      if( !_MASK(USARTx->SR, _BIT(6)) ) return Fail;
-      USARTx->DR = byte;
-      return Success;
-    }
-    default: return Fail;
-  }
+  // TXE
+  if( !_MASK(USARTx->SR, _BIT(7)) ) return Fail;
+
+  USARTx->DR = byte;
+
+  return Success;
 }
 
-static inline task_t _InterfaceUART_RxByte(USART_TypeDef * USARTx, volatile uint8_t * byte, InterfaceUART_ThreadType_Enum thread)
+/**
+ * @brief 
+ * 
+ * @param USARTx 
+ * @param byte 
+ * @param thread 
+ * @return task_t 
+ */
+static inline task_t _InterfaceUSART_RxByte(USART_TypeDef * USARTx, volatile uint8_t * byte)
 {
-  switch( thread ) {
-    case UART_MAIN_THREAD: {
-      while( !_MASK(USARTx->SR, _BIT(5)) ) { }
-      *byte = (uint8_t)USARTx->DR;
-      return Success;
-    }
-    case UART_INTERRUPT: { // ? Not sure if it works
-      if( !_MASK(USARTx->SR, _BIT(5)) ) return Fail;
-      *byte = (uint8_t)USARTx->DR;
-      return Success;
-    }
-    default: return Fail;
-  }
+  // RXNE
+  if( !_MASK(USARTx->SR, _BIT(5)) ) return Fail;
+
+  *byte = (uint8_t)USARTx->DR;
+
+  return Success;
 }
 
 /* ---------------------------------------------------------------- Interface Code End */
@@ -94,24 +90,26 @@ static inline task_t _InterfaceUART_RxByte(USART_TypeDef * USARTx, volatile uint
 
 static inline task_t __W_Series(USART_TypeDef * USARTx, const uint8_t array[], size_t len)
 {
-  for(size_t i = 0; i < len; ++i) _InterfaceUART_TxByte(USARTx, array[i], UART_MAIN_THREAD);
+  for(size_t i = 0; i < len; ++i)
+    while( _InterfaceUSART_TxByte(USARTx, array[i]) != Success ) { }
 
   return Success;
 }
 
 static inline task_t __R_Series(USART_TypeDef * USARTx, volatile uint8_t array[], size_t len)
 {
-  for(size_t i = 0; i < len; ++i) _InterfaceUART_RxByte(USARTx, &array[i], UART_MAIN_THREAD);
+  for(size_t i = 0; i < len; ++i) 
+    while( _InterfaceUSART_RxByte(USARTx, &array[i]) != Success ) { }
 
   return Success;
 }
 
 /* --------------------------------------------------------------------- Demo Code End */
 
-#endif // UART_UNREADY
+#endif // USART_UNREADY
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
-#endif // _INTERFACE_UART_H_
+#endif // _INTERFACE_USART_H_

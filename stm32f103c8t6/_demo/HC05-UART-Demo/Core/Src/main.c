@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "hc05.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,12 +49,36 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+static task_t HC05_AT(HC05_DS * restrict self, const uint8_t command[], size_t len)
+{
+	const uint8_t check[4] = "OK\r\n";
+	volatile uint8_t packet[4] = {0};
+	volatile size_t size = 0;
+	
+	LL_GPIO_ResetOutputPin(TEST_GPIO_Port, TEST_Pin);
+	
+	HC05_ClearResidualData(self, 1000);
+	HC05_setTxDatas(self, command, len);
+	
+	do {
+		HC05_TxByte(self, 1000);
+	} while( !HC05_isTxDone(self) );
+	
+	LL_GPIO_SetOutputPin(TEST_GPIO_Port, TEST_Pin);
+	
+	do {
+		HC05_RxByte(self, 1000);
+	} while( !HC05_isRxDone(self, check, 4) );
+	
+	HC05_getRxDatas(self, packet, &size);
+	
+	return Success;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+HC05_DS * restrict hc05;
 /* USER CODE END 0 */
 
 /**
@@ -107,39 +131,49 @@ int main(void)
 	//uint8_t * data = calloc(1, sizeof(uint8_t));
 	//if( data == NULL ) return -1;
 	
-	uint8_t timeout = 10;
-	const uint8_t array[4] = "AT\r\n";
+	//const uint8_t test[4]  = "AT\r\n";
+	//const uint8_t name[16] = "AT+NAME=shrimp\r\n";
+	//const uint8_t role[11] = "AT+ROLE=0\r\n";
+	//const uint8_t pswd[14] = "AT+PSWD=1234\r\n";
+	//const uint8_t uart[18] = "AT+UAET=9600,0,0\r\n";
+	//const uint8_t mode[12] = "AT+CMODE=1\r\n";
 	
-	volatile uint8_t packet[4] = {0};
-	volatile size_t len = 0;
+	const uint8_t hi[16] = "Hellow shrimp!\r\n";
+	const uint8_t check[4] = "OK\r\n";
+	volatile uint8_t array[50] = {0}; 
+	volatile size_t  len = 0;
 	
-	HC05_DS * hc05 = HC05_Constructor(USART1);
+	hc05 = HC05_Constructor(USART1);
+	
 	if( !hc05 ) return -1;
+	
+	HC05_ClearResidualData(hc05, 1000);
+	
+	LL_USART_EnableIT_RXNE(USART1);
+	
+	//HC05_AT(hc05, name, 16); LL_mDelay(500);
+	//HC05_AT(hc05, role, 11); LL_mDelay(500);
+	//HC05_AT(hc05, pswd, 14); LL_mDelay(500);
+	//HC05_AT(hc05, uart, 18); LL_mDelay(500);
+	//HC05_AT(hc05, mode, 12); LL_mDelay(500);
+	
   while (1)
   { // LL_IWDG_ReloadCounter(IWDG);
 		
-		timeout = 10;
-		LL_GPIO_ResetOutputPin(TEST_GPIO_Port, TEST_Pin);
-		
-		HC05_ClearResidualData(hc05);
-		HC05_setTxDatas(hc05, array, 4);
-		
-		do {
-			HC05_TxByte(hc05, UART_MAIN_THREAD);
-		} while( !HC05_isTxDone(hc05) && timeout-- );
-		
-		timeout = 10;
-		LL_GPIO_SetOutputPin(TEST_GPIO_Port, TEST_Pin);
-		
-		do {
-			HC05_RxByte(hc05, UART_MAIN_THREAD);
-		} while( !HC05_isRxDone(hc05) && timeout-- );
-		
-		if( timeout == 0 ) HC05_DiscardPacket(hc05);
-		else HC05_getRxDatas(hc05, packet, &len);
-		
 		LL_mDelay(100);
-	
+		
+		if( !HC05_isRxDone(hc05, check, 4) ) continue;
+		
+		HC05_ClearResidualData(hc05, 1000);
+		HC05_setTxDatas(hc05, hi, 16);
+
+		do {
+			HC05_TxByte(hc05, 1000);
+		} while( !HC05_isTxDone(hc05) );
+		
+		HC05_getRxDatas(hc05, array, &len);
+		
+		
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -222,10 +256,14 @@ static void MX_USART1_UART_Init(void)
   GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
   LL_GPIO_Init(MRST_GPIO_Port, &GPIO_InitStruct);
 
+  /* USART1 interrupt Init */
+  NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_EnableIRQ(USART1_IRQn);
+
   /* USER CODE BEGIN USART1_Init 1 */
 
   /* USER CODE END USART1_Init 1 */
-  USART_InitStruct.BaudRate = 38400;
+  USART_InitStruct.BaudRate = 9600; // 38400
   USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
   USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
   USART_InitStruct.Parity = LL_USART_PARITY_NONE;

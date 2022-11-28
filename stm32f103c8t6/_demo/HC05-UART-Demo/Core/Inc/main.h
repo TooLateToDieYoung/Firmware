@@ -44,7 +44,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "hc05.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -89,7 +89,7 @@ void Error_Handler(void);
                                                                  0 bit  for subpriority */
 #endif
 /* USER CODE BEGIN Private defines */
-
+extern HC05_DS * restrict hc05;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
