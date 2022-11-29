@@ -4,7 +4,7 @@
  * @brief
  * @warning
  * @version 0.1
- * @date 2022-11-24
+ * @date 2022-11-29
  * 
  * @copyright Copyright (c) 2022
  * 
@@ -43,6 +43,30 @@ extern "C" {
  * @warning Do not change these codes, it may cause errors
  */
 
+static inline task_t _InterfaceSPI_TxByte(SPI_TypeDef * SPIx, uint8_t byte)
+{
+  if( !_MASK(SPIx->SR, _BIT(1)) ) return Fail; // not TXE
+	
+	SPIx->DR = byte;
+
+  return Success;
+}
+
+static inline task_t _InterfaceSPI_RxByte(SPI_TypeDef * SPIx, volatile uint8_t * const byte)
+{
+	if( !_MASK(SPIx->SR, _BIT(0)) ) return Fail; // not RXNE
+	
+	if( !byte ) {
+		uint8_t temp = (uint8_t)SPIx->DR;
+		(void)temp;
+	} 
+	else {
+		*byte = (uint8_t)SPIx->DR;
+	}
+  
+  return Success;
+}
+
 /* ---------------------------------------------------------------- Interface Code End */
 
 /** Demo Code Begin --------------------------------------------------------------------
@@ -51,6 +75,15 @@ extern "C" {
  * | Users can rewrite the content of the function according to \n
  * | their own needs, or customize new functions
  */
+
+static inline task_t _InterfaceSPI_ShiftByte(SPI_TypeDef * SPIx, uint8_t TxByte, volatile uint8_t * RxByte)
+{
+	while( _InterfaceSPI_TxByte(SPIx, TxByte) != Success ) { }
+	
+	while( _InterfaceSPI_RxByte(SPIx, RxByte) != Success ) { }
+	
+	return Success;
+}
 
 /* --------------------------------------------------------------------- Demo Code End */
 
