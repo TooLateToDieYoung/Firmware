@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "interfacespi.h": "c",
+    "buffer.h": "c"
+  }
+}

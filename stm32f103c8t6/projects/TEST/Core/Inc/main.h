@@ -27,7 +27,6 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_ll_i2c.h"
 #include "stm32f1xx_ll_iwdg.h"
 #include "stm32f1xx_ll_rcc.h"
 #include "stm32f1xx_ll_bus.h"
@@ -38,6 +37,7 @@ extern "C" {
 #include "stm32f1xx_ll_pwr.h"
 #include "stm32f1xx_ll_dma.h"
 #include "stm32f1xx_ll_spi.h"
+#include "stm32f1xx_ll_tim.h"
 #include "stm32f1xx_ll_usart.h"
 #include "stm32f1xx_ll_gpio.h"
 
@@ -48,13 +48,10 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "common.h"
-#include "InterfaceUSART.h"
-#include "InterfaceI2C.h"
-#include "InterfaceSPI.h"
+#include "buffer.h"
 #include "hc05.h"
 #include "lsm6ds3.h"
-#include "VL53L1X_api.h"
-//#include "vl53l1_platform.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -96,10 +93,6 @@ void Error_Handler(void);
 #define MTSR_GPIO_Port GPIOA
 #define MRST_Pin LL_GPIO_PIN_10
 #define MRST_GPIO_Port GPIOA
-#define SCL_Pin LL_GPIO_PIN_6
-#define SCL_GPIO_Port GPIOB
-#define SDA_Pin LL_GPIO_PIN_7
-#define SDA_GPIO_Port GPIOB
 #ifndef NVIC_PRIORITYGROUP_0
 #define NVIC_PRIORITYGROUP_0         ((uint32_t)0x00000007) /*!< 0 bit  for pre-emption priority,
                                                                  4 bits for subpriority */
@@ -113,6 +106,23 @@ void Error_Handler(void);
                                                                  0 bit  for subpriority */
 #endif
 /* USER CODE BEGIN Private defines */
+typedef struct {
+	
+	struct {
+		HC05_DS * device;
+		Buffer_DS * rx;
+		Buffer_DS * tx;
+	} hc05;
+	
+	struct {
+		LSM6DS3_DS * device;
+		Buffer_DS * buffer;
+		bool_t isReloaded;
+	} lsm6ds3;
+	
+} Application_DS;
+
+extern Application_DS app;
 
 /* USER CODE END Private defines */
 

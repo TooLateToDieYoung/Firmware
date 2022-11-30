@@ -75,7 +75,7 @@ static inline task_t _InterfaceSPI_RxByte(SPI_TypeDef * SPIx, volatile uint8_t *
  * | Users can rewrite the content of the function according to \n
  * | their own needs, or customize new functions
  */
-
+/*
 static inline task_t _InterfaceSPI_ShiftByte(SPI_TypeDef * SPIx, uint8_t TxByte, volatile uint8_t * RxByte)
 {
 	while( _InterfaceSPI_TxByte(SPIx, TxByte) != Success ) { }
@@ -84,7 +84,7 @@ static inline task_t _InterfaceSPI_ShiftByte(SPI_TypeDef * SPIx, uint8_t TxByte,
 	
 	return Success;
 }
-
+*/
 /* --------------------------------------------------------------------- Demo Code End */
 
 #endif // UNREADY

@@ -41,46 +41,125 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+Application_DS app;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);
 static void MX_IWDG_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_TIM4_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
+static task_t print(const char * restrict str, size_t len)
+{
+	uint8_t temp = 0;
+	HC05_RxByte(app.hc05.device, &temp, 100); // clear useless data 
+	
+	Buffer_Flush(app.hc05.tx);
+	for(size_t i = 0; i < len; ++i) Buffer_Push(app.hc05.tx, (uint8_t)str[i]);
+	
+	app.hc05.device->USARTx->CR1 |= _BIT(7);
+	
+	return Success;
+}
+
+static void send(uint8_t data) 
+{
+	uint8_t value = 0;
+	
+	value = 0x41 + ( ( data & 0xF0 ) >> 4 ) ;
+	
+	while( Buffer_Length(app.hc05.tx) ) LL_IWDG_ReloadCounter(IWDG); // waiting hc05 not busy
+	
+	print((char*)&value, 1);
+	
+	value = 0x41 + ( data & 0x0F ) ;
+	
+	while( Buffer_Length(app.hc05.tx) ) LL_IWDG_ReloadCounter(IWDG); // waiting hc05 not busy
+
+	print((char*)&value, 1);
+}
+
+static void App_Init(void)
+{
+	// HC05
+	app.hc05.device = HC05_Constructor(USART1);
+	app.hc05.rx = Buffer_Constructor(50);
+	app.hc05.tx = Buffer_Constructor(50);
+	
+	// LSM6DS3
+	app.lsm6ds3.device = LSM6DS3_Constructor(SPI1, SCS_GPIO_Port, 4); // SCS_Pin is 4th pin
+	app.lsm6ds3.buffer = Buffer_Constructor(12);
+	
+	LL_SPI_Enable(SPI1);
+	
+	LL_mDelay(200);
+	
+	uint8_t value = 0x60;
+	do { LL_IWDG_ReloadCounter(IWDG);
+		value = 0x60;
+		LSM6DS3_setRegister(app.lsm6ds3.device, CTRL_ACCE,  value, 1000);
+		LSM6DS3_getRegister(app.lsm6ds3.device, CTRL_ACCE, &value, 1000);
+	} while( value != 0x60 );
+	
+	LL_TIM_EnableIT_UPDATE(TIM4);
+	LL_TIM_EnableCounter(TIM4);
+}
+
+static void App_Task(void)
+{
+	if( _MASK(SWFD_GPIO_Port->IDR, _BIT(15)) ) return;
+	
+	while( !_MASK(SWFD_GPIO_Port->IDR, _BIT(15)) ) LL_IWDG_ReloadCounter(IWDG); // waiting button release
+	
+	LL_GPIO_SetOutputPin(TEST_GPIO_Port, TEST_Pin);
+	
+	print("\r\nHellow World!\r\n", 17);
+	
+	uint8_t value = 0, raw[2];
+	
+	LSM6DS3_getRegister(app.lsm6ds3.device, STATUS_R, &value, 1000);
+	
+	if( !_MASK(value, _BIT(0)) ) return;
+
+	LSM6DS3_getRegister(app.lsm6ds3.device, ACCE_Z_L, &raw[0], 1000);
+	LSM6DS3_getRegister(app.lsm6ds3.device, ACCE_Z_H, &raw[1], 1000);
+	
+value = 0x41 + ( ( raw[1] & 0xF0 ) >> 4 ) ;
+	
+	while( Buffer_Length(app.hc05.tx) ) LL_IWDG_ReloadCounter(IWDG); // waiting hc05 not busy
+	
+	print((char*)&value, 1);
+	
+value = 0x41 + ( raw[1] & 0x0F ) ;
+	
+	while( Buffer_Length(app.hc05.tx) ) LL_IWDG_ReloadCounter(IWDG); // waiting hc05 not busy
+	
+	print((char*)&value, 1);
+	
+value = 0x41 + ( ( raw[0] & 0xF0 ) >> 4 ) ;
+	
+	while( Buffer_Length(app.hc05.tx) ) LL_IWDG_ReloadCounter(IWDG); // waiting hc05 not busy
+	
+	print((char*)&value, 1);
+	
+value = 0x41 + ( raw[0] & 0x0F ) ;
+	
+	while( Buffer_Length(app.hc05.tx) ) LL_IWDG_ReloadCounter(IWDG); // waiting hc05 not busy
+	
+	print((char*)&value, 1);
+	
+	LL_GPIO_ResetOutputPin(TEST_GPIO_Port, TEST_Pin);
+}
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-HC05_DS * restrict hc05 = 0;
-static task_t print(const uint8_t str[], size_t len)
-{
-	HC05_ClearResidualData(hc05, 10);
-	HC05_setTxDatas(hc05, str, len);
 
-	do {
-		HC05_TxByte(hc05, 1000);
-	} while( !HC05_isTxDone(hc05) );
-	
-	return Success;
-}
-
-LSM6DS3_DS * restrict lsm6ds3 = 0;
-static uint8_t _SPI_ReadRegister(uint8_t reg)
-{
-	volatile uint8_t result = 0;
-	
-	_InterfaceSPI_ShiftByte(SPI1, ( 0x80 | reg ), 0);
-	
-	_InterfaceSPI_ShiftByte(SPI1, 0x00, &result);
-	
-	return result;
-}
 /* USER CODE END 0 */
 
 /**
@@ -117,72 +196,42 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-		
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_I2C1_Init();
   MX_IWDG_Init();
   MX_SPI1_Init();
+  MX_TIM4_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-	SysTick->CTRL = 
-		SysTick_CTRL_ENABLE_Msk  | // Enable SysTick Timer
-		SysTick_CTRL_TICKINT_Msk ; // Enable SysTick Timer Interrupt
-
-	LL_SPI_Enable(SPI1);
+	App_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	hc05 = HC05_Constructor(USART1);
-	
-	if( !hc05 ) return -1; 
-	
-	lsm6ds3 = LSM6DS3_Constructor(SPI1, SCS_GPIO_Port, 4);
-	
-	if( !lsm6ds3 ) return -1; 
-	
-	// for hc05
-	const uint8_t hi[15] = "Hellow World!\r\n";
-	
-	// for lsm6ds3
-	volatile uint8_t data = 0;
-	
-	// for vl53l1x
-	const uint8_t device = 0x52;
-	uint8_t check = 0;
-	uint16_t distance = 0;
-	VL53L1X_SensorInit(device);
-	VL53L1X_StartRanging(device);
+	uint8_t temp = 0;
 	
   while (1)
   { LL_IWDG_ReloadCounter(IWDG);
 		
-		if( _MASK(GPIOB->IDR, _BIT(15)) ) continue;
+		// App_Task();
 		
-		while( !_MASK(GPIOB->IDR, _BIT(15)) ) LL_IWDG_ReloadCounter(IWDG);
+		if( !app.lsm6ds3.isReloaded ) continue;
 		
-		LL_GPIO_TogglePin(TEST_GPIO_Port, TEST_Pin);
+		while( Buffer_Length(app.hc05.tx) ) LL_IWDG_ReloadCounter(IWDG); // waiting hc05 not busy
 		
-		print(hi, 15);
+		print("\r\nAcce: ", 8);
 		
-		check = 0;
-		VL53L1X_CheckForDataReady(device, &check);
-		if( check == 1 ) {
-
-			distance = 0;
-			VL53L1X_GetDistance(device, &distance);
-			if( distance != 0 ) {
-				print("distance: ", 10);
-				print(&distance, 1);
-				print("\r\n", 2);
-			}
+		for(size_t i = 6; i; --i) {
+			Buffer_Index(app.lsm6ds3.buffer, i - 1, &temp);
+			send(temp);
 		}
 		
-		LSM6DS3_RxSeries(lsm6ds3, WHO_AM_I, &data, 1, 100);
-		if( data == 0x69 ) print("address: 0x69\r\n", 15);
+		Buffer_Flush(app.lsm6ds3.buffer);
+		
+		app.lsm6ds3.isReloaded = False;
 		
     /* USER CODE END WHILE */
 
@@ -235,59 +284,6 @@ void SystemClock_Config(void)
   }
   LL_Init1msTick(9000000);
   LL_SetSystemCoreClock(72000000);
-}
-
-/**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  LL_I2C_InitTypeDef I2C_InitStruct = {0};
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
-  /**I2C1 GPIO Configuration
-  PB6   ------> I2C1_SCL
-  PB7   ------> I2C1_SDA
-  */
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_6|LL_GPIO_PIN_7;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_I2C1);
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-
-  /** I2C Initialization
-  */
-  LL_I2C_DisableOwnAddress2(I2C1);
-  LL_I2C_DisableGeneralCall(I2C1);
-  LL_I2C_EnableClockStretching(I2C1);
-  I2C_InitStruct.PeripheralMode = LL_I2C_MODE_I2C;
-  I2C_InitStruct.ClockSpeed = 100000;
-  I2C_InitStruct.DutyCycle = LL_I2C_DUTYCYCLE_2;
-  I2C_InitStruct.OwnAddress1 = 0;
-  I2C_InitStruct.TypeAcknowledge = LL_I2C_ACK;
-  I2C_InitStruct.OwnAddrSize = LL_I2C_OWNADDRESS1_7BIT;
-  LL_I2C_Init(I2C1, &I2C_InitStruct);
-  LL_I2C_SetOwnAddress2(I2C1, 0);
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
 }
 
 /**
@@ -377,6 +373,45 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  LL_TIM_InitTypeDef TIM_InitStruct = {0};
+
+  /* Peripheral clock enable */
+  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM4);
+
+  /* TIM4 interrupt Init */
+  NVIC_SetPriority(TIM4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_EnableIRQ(TIM4_IRQn);
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  TIM_InitStruct.Prescaler = 17999;
+  TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
+  TIM_InitStruct.Autoreload = 999;
+  TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV4;
+  LL_TIM_Init(TIM4, &TIM_InitStruct);
+  LL_TIM_EnableARRPreload(TIM4);
+  LL_TIM_SetClockSource(TIM4, LL_TIM_CLOCKSOURCE_INTERNAL);
+  LL_TIM_SetTriggerOutput(TIM4, LL_TIM_TRGO_RESET);
+  LL_TIM_DisableMasterSlaveMode(TIM4);
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -409,6 +444,10 @@ static void MX_USART1_UART_Init(void)
   GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* USART1 interrupt Init */
+  NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),2, 0));
+  NVIC_EnableIRQ(USART1_IRQn);
 
   /* USER CODE BEGIN USART1_Init 1 */
 
@@ -445,10 +484,10 @@ static void MX_GPIO_Init(void)
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
 
   /**/
-  LL_GPIO_SetOutputPin(GPIOC, LL_GPIO_PIN_13);
+  LL_GPIO_ResetOutputPin(GPIOC, LL_GPIO_PIN_13);
 
   /**/
-  LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_4);
+  LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_4);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_13;
@@ -461,7 +500,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = LL_GPIO_PIN_4;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /**/
