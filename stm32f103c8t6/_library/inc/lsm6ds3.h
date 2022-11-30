@@ -84,6 +84,40 @@ LSM6DS3_DS * LSM6DS3_Constructor(SPI_TypeDef * SPIx, GPIO_TypeDef * GPIOx, uint8
 task_t LSM6DS3_Destructor(LSM6DS3_DS * self);
 
 /**
+ * @brief select device -> CS wire low
+ * 
+ * @param self 
+ */
+void LSM6DS3_HoldDevice(LSM6DS3_DS * const self);
+
+/**
+ * @brief release device -> CS wire high
+ * 
+ * @param self 
+ */
+void LSM6DS3_FreeDevice(LSM6DS3_DS * const self);
+
+/**
+ * @brief Transfer one byte
+ * 
+ * @param self: object pointer 
+ * @param byte: byte to write
+ * @param timeout: set try times
+ * @return task_t: Success / Fail 
+ */
+task_t LSM6DS3_TxByte(LSM6DS3_DS * const self, const uint8_t byte, uint16_t timeout);
+
+/**
+ * @brief Transfer one byte
+ * 
+ * @param self: object pointer 
+ * @param byte: byte to save read data
+ * @param timeout: set try times
+ * @return task_t: Success / Fail 
+ */
+task_t LSM6DS3_RxByte(LSM6DS3_DS * const self, volatile uint8_t * const byte, uint16_t timeout);
+
+/**
  * @brief write one byte into the register
  * 
  * @param self: object pointer
