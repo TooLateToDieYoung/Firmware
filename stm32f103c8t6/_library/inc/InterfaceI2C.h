@@ -1,10 +1,15 @@
 /**
  * @file InterfaceI2C.h
  * @author Zhang, Zhen Yu (https://github.com/TooLateToDieYoung)
- * @brief People who use this library can easily realize their own I2C read / write functions via these interfaces
- * @warning It works only with I2C master device
- * @version 0.1
- * @date 2022-11-24
+ * @brief 
+ * | People who use this library can easily realize \n 
+ * | their own I2C read / write functions via these interfaces.
+ * | All the functions wrapped in the "interface" \n 
+ * | can be called from the main thread or interrupts.
+ * 
+ * @warning It works only with I2C master device & 7bit device address
+ * @version 1.1
+ * @date 2022-12-01
  * 
  * @copyright Copyright (c) 2022
  * 
@@ -34,10 +39,6 @@ extern "C" {
 
 #include "common.h" // ask for some useful tools & typedef
 
-// Definitions
-typedef enum { DirW = 0, DirR = 1 } I2C_DirectionRW_Enum;
-typedef enum { Nack, Ack, Invalid } I2C_AckType_Enum;
-
 /** Interface Begin --------------------------------------------------------------------
  * @brief 
  * | Almost directly through the register operation. \n
@@ -55,63 +56,54 @@ typedef enum { Nack, Ack, Invalid } I2C_AckType_Enum;
  */
 static inline task_t _InterfaceI2C_Start(I2C_TypeDef * I2Cx)
 {
-	I2Cx->CR1 |= _BIT(8); 
+  // check if I2Cx is busy
+  if( _MASK(I2Cx->SR2, _BIT(1)) ) return Fail;
 
-  while( !_MASK(I2Cx->SR1, _BIT(0)) ) { } 
+  // generate start signal
+	I2Cx->CR1 |= _BIT(8);
 
 	return Success;
-
-/* 
-- The same function, using the LL library would look like:
-
-  LL_I2C_GenerateStartCondition(I2Cx);
-
-  while(!LL_I2C_IsActiveFlag_SB(I2Cx)) { }
-
-  return Success;
-*/
 }
 
 /**
- * @brief Send device read / write address
+ * @brief send device read / write address
  * 
  * @param I2Cx: defined in the stm32f103xx series header
  * @param device: I2C device address (7bit)
- * @param rw: DirR / DirR, direction read or write 
- * @param type: Nack, Ack, Invalid, transmission is followed by ack or nack, only valid when rw == DirR.
+ * @param isRead: is direction read or not ( !read == write ) 
  * @return task_t: Success / Fail
  */
-static inline task_t _InterfaceI2C_Device(I2C_TypeDef * I2Cx, uint8_t device, I2C_DirectionRW_Enum rw, I2C_AckType_Enum type)
+static inline task_t _InterfaceI2C_Device(I2C_TypeDef * I2Cx, uint8_t device, bool_t isRead)
 {
-	I2Cx->DR = device + (uint8_t)rw;
-	
-  while( !_MASK(I2Cx->SR1, _BIT(1)) ) { }
-	
-  if( rw == DirR ) {
-    if( type == Nack ) I2Cx->CR1 &= ~_BIT(10);
-    else I2Cx->CR1 |= _BIT(10);
-  }
+  // check if start condition is generated
+  if( !_MASK(I2Cx->SR1, _BIT(0)) ) return Fail;
 
-  uint8_t temp = ( I2Cx->SR1 | I2Cx->SR2 ); (void)temp;
+  // send device read / write address
+	I2Cx->DR = ( isRead ) ? ( device | 0x01 ) : ( device ) ;
 
 	return Success;
+}
 
-/* 
-- The same function, using the LL library would look like:
+/**
+ * @brief clear address tx done flag & preset ack or nack if it will be rx byte
+ * 
+ * @param I2Cx: defined in the stm32f103xx series header
+ * @param isAckNext: decide whether to generate ack for next rx bytes
+ * @return task_t: Success / Fail
+ */
+static inline task_t _InterfaceI2C_PreloadStatus(I2C_TypeDef * I2Cx, bool_t isAckNext)
+{
+  // check if it is the end of address transmission
+  if( !_MASK(I2Cx->SR1, _BIT(1)) ) return Fail;
 
-  LL_I2C_TransmitData8(I2Cx, device + (uint8_t)rw;);
+  // decide whether to generate ack for next rx bytes
+  if( isAckNext ) I2Cx->CR1 |= _BIT(10);
+  else I2Cx->CR1 &= ~_BIT(10);
 
-  while(!LL_I2C_IsActiveFlag_ADDR(I2Cx)) { }
-
-  if( rw == DirR ) {
-    if( type == Nack ) LL_I2C_AcknowledgeNextData(I2Cx, LL_I2C_NACK);
-    else LL_I2C_AcknowledgeNextData(I2Cx, LL_I2C_ACK);
-  }
-
-  LL_I2C_ClearFlag_ADDR(I2Cx);
+  // read SR1 & SR2 to clear I2Cx->SR1 _BIT(1), refer to datasheet
+  uint8_t temp = ( I2Cx->SR1 | I2Cx->SR2 ); (void)temp; // ? ignore temp
 
   return Success;
-*/
 }
 
 /**
@@ -121,27 +113,15 @@ static inline task_t _InterfaceI2C_Device(I2C_TypeDef * I2Cx, uint8_t device, I2
  * @param byte: data to send
  * @return task_t: Success / Fail
  */
-static inline task_t _InterfaceI2C_TxByte(I2C_TypeDef * I2Cx, uint8_t byte)
+static inline task_t _InterfaceI2C_TxByte(I2C_TypeDef * I2Cx, const uint8_t byte)
 {
-	while( !_MASK(I2Cx->SR1, _BIT(7)) ) { }
+  // check if TXE
+  if( !_MASK(I2Cx->SR1, _BIT(7)) ) return Fail;
 	
+  // send byte
   I2Cx->DR = byte;
 
-	while( !_MASK(I2Cx->SR1, _BIT(2)) ) { }
-	
   return Success;
-
-/* 
-- The same function, using the LL library would look like:
-
-  while(!LL_I2C_IsActiveFlag_TXE(I2Cx)) { }
-
-  LL_I2C_TransmitData8(I2Cx, byte);
-
-  while(!LL_I2C_IsActiveFlag_BTF(I2Cx)) { }
-
-  return Success;
-*/
 }
 
 /**
@@ -149,52 +129,40 @@ static inline task_t _InterfaceI2C_TxByte(I2C_TypeDef * I2Cx, uint8_t byte)
  * 
  * @param I2Cx: defined in the stm32f103xx series header
  * @param byte: buffer for recording data
+ * @param isAckNext: decide whether to generate ack for next rx bytes
  * @return task_t: Success / Fail
  */
-static inline task_t _InterfaceI2C_RxByte(I2C_TypeDef * I2Cx, uint8_t * byte, I2C_AckType_Enum type)
+static inline task_t _InterfaceI2C_RxByte(I2C_TypeDef * I2Cx, volatile uint8_t * const byte, bool_t isAckNext)
 {
-	while( !_MASK(I2Cx->SR1, _BIT(6)) ) { }
+  // check if RXNE
+  if( !_MASK(I2Cx->SR1, _BIT(6)) ) return Fail;
 	
+  // recive byte
   *byte = (uint8_t)I2Cx->DR;
 	
-  if( type == Ack ) I2Cx->CR1 |= _BIT(10);
+  // decide whether to generate ack for next rx bytes
+  if( isAckNext ) I2Cx->CR1 |= _BIT(10);
   else I2Cx->CR1 &= ~_BIT(10);
 
   return Success;
-
-/* 
-- The same function, using the LL library would look like:
-
-  while(!LL_I2C_IsActiveFlag_RXNE(I2Cx)) { }
-
-  *byte = (uint8_t)LL_I2C_ReceiveData8(I2Cx);
-
-  if( type == Ack ) LL_I2C_AcknowledgeNextData(I2Cx, LL_I2C_ACK);
-  else LL_I2C_AcknowledgeNextData(I2Cx, LL_I2C_NACK);
-
-  return Success;
-*/
 }
 
 /**
  * @brief generate stop condition
  * 
  * @param I2Cx: defined in the stm32f103xx series header
- * @return task_t: Success / Fail
+ * @param needCheckTxDone: check if this function is called after TxByte()
+ * @return task_t: Success / Fai
  */
-static inline task_t _InterfaceI2C_Stop(I2C_TypeDef * I2Cx)
-{
+static inline task_t _InterfaceI2C_Stop(I2C_TypeDef * I2Cx, bool_t isAfterTx)
+{ 
+  // check if BTF( Byte transfer finished ) follows TxByte()
+  if( isAfterTx && !_MASK(I2C1->SR1, _BIT(2)) ) return Fail; 
+
+  // generate stop signal
   I2Cx->CR1 |= _BIT(9);
 	
   return Success;
-
-/* 
-- The same function, using the LL library would look like:
-
-  LL_I2C_GenerateStopCondition(I2Cx);
-	
-  return Success;
-*/
 }
 /* ---------------------------------------------------------------- Interface Code End */
 
@@ -213,21 +181,29 @@ static inline task_t _InterfaceI2C_Stop(I2C_TypeDef * I2Cx)
  * @param array: datas to send
  * @param len: array length
  * @return task_t: Success / Fail 
- *//*
-static inline task_t __W_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t array[], size_t len)
+ */
+static inline task_t _InterfaceI2C_TxSeries(I2C_TypeDef * I2Cx, uint8_t device, const uint8_t array[], size_t len)
 {
-  if( len == 0 ) return Success;
+	if( len == 0 ) return Success;
 
-  __Start(I2Cx);
+	// I2C wire start: SDA low -> SCL low
+  while( _InterfaceI2C_Start(I2Cx) != Success ) { }
 
-  __Device(I2Cx, device, DirW, Invalid);
+	// device address: direction write
+  while( _InterfaceI2C_Device(I2Cx, device, False) != Success ) { }
 
-  for(size_t i = 0; i < len; ++i) __TxByte(I2Cx, array[i]);
+  // clear address tx done flag & preset ack or nack if it will be rx byte
+  while( _InterfaceI2C_PreloadStatus(I2Cx, False) != Success ) { }
+	
+	// tranfer datas
+  for(uint32_t i = 0; i < len; ++i) 
+    while( _InterfaceI2C_TxByte(I2Cx, array[i]) != Success ) { }
 
-  __Stop(I2Cx);
+	// I2C wire stop: SCL high -> SDA high
+  while( _InterfaceI2C_Stop(I2Cx, True) != Success ) { }
 
 	return Success;
-}*/
+}
 
 /**
  * @brief Continuously read multiple data from the specified device
@@ -238,29 +214,37 @@ static inline task_t __W_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t arra
  * @param array: buffer to receive datas
  * @param len: array length
  * @return task_t: Success / Fail 
- *//*
-static inline task_t __R_Series(I2C_TypeDef * I2Cx, uint8_t device, uint8_t array[], size_t len)
+ */
+static inline task_t _InterfaceI2C_RxSeries(I2C_TypeDef * I2Cx, uint8_t device, volatile uint8_t array[], size_t len)
 {
-  if( len == 0 ) return Success;
+	if( len == 0 ) return Success;
 
-  I2C_AckType_Enum type = ( len > 1 ) ? ( Ack ) : ( Nack ) ;
+  bool_t needAck = ( len > 1 ) ? ( True ) : ( False ) ;
+	
+	// I2C wire restart
+  while( _InterfaceI2C_Start(I2Cx) != Success ) { }
+	
+	// device address: direction read
+  while( _InterfaceI2C_Device(I2Cx, device, True) != Success ) { }
 
-  __Start(I2Cx); // Restart
+  // clear address tx done flag & preset ack or nack if it will be rx byte
+  while( _InterfaceI2C_PreloadStatus(I2Cx, needAck) != Success ) { }
 
-  __Device(I2Cx, device, DirR, type);
-
-  for(size_t i = 0; type == Ack; ++i) {
-    if( i + 2 >= len ) type = Nack;
-    __RxByte(I2Cx, &array[i], type);
+	// receive datas: 0 to ( last - 1 )
+  for(uint32_t i = 0; needAck; ++i) {
+    if( i + 2 >= len ) needAck = False;
+    while( _InterfaceI2C_RxByte(I2Cx, &array[i], needAck) != Success ) { }
   }
+	
+	// I2C wire stop: SCL high -> SDA high
+  while( _InterfaceI2C_Stop(I2Cx, False) != Success ) { }
 
-  __Stop(I2Cx);
-
-  __RxByte(I2Cx, &array[len-1], Nack);
+	// receive last data
+  while( _InterfaceI2C_RxByte(I2Cx, &array[len-1], False) != Success ) { }
 
 	return Success;
 }
-*/
+
 /* --------------------------------------------------------------------- Demo Code End */
 
 

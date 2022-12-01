@@ -1,7 +1,12 @@
 /**
  * @file InterfaceUSART.h
  * @author Zhang, Zhen Yu (https://github.com/TooLateToDieYoung)
- * @brief
+ * @brief 
+ * | People who use this library can easily realize \n 
+ * | their own I2C read / write functions via these interfaces.
+ * | All the functions wrapped in the "interface" \n 
+ * | can be called from the main thread or interrupts.
+ * 
  * @warning
  * @version 0.1
  * @date 2022-11-24
@@ -44,36 +49,36 @@ extern "C" {
  */
 
 /**
- * @brief 
+ * @brief transfer a byte
  * 
- * @param USARTx 
- * @param byte 
- * @param thread 
- * @return task_t 
+ * @param USARTx: defined in the stm32f103xx series header
+ * @param byte: data to send
+ * @return task_t: Success / Fail
  */
-static inline task_t _InterfaceUSART_TxByte(USART_TypeDef * USARTx, uint8_t byte)
+static inline task_t _InterfaceUSART_TxByte(USART_TypeDef * USARTx, const uint8_t byte)
 {
-  // TXE
+  // check if TXE
   if( !_MASK(USARTx->SR, _BIT(7)) ) return Fail;
 
+  // send byte
   USARTx->DR = byte;
 
   return Success;
 }
 
 /**
- * @brief 
+ * @brief receive a byte
  * 
- * @param USARTx 
- * @param byte 
- * @param thread 
- * @return task_t 
+ * @param USARTx: defined in the stm32f103xx series header
+ * @param byte: buffer for recording data
+ * @return task_t: Success / Fail
  */
-static inline task_t _InterfaceUSART_RxByte(USART_TypeDef * USARTx, volatile uint8_t * byte)
+static inline task_t _InterfaceUSART_RxByte(USART_TypeDef * USARTx, volatile uint8_t * const byte)
 {
-  // RXNE
+  // check if RXNE
   if( !_MASK(USARTx->SR, _BIT(5)) ) return Fail;
 
+  // receive byte
   *byte = (uint8_t)USARTx->DR;
 
   return Success;
@@ -88,7 +93,15 @@ static inline task_t _InterfaceUSART_RxByte(USART_TypeDef * USARTx, volatile uin
  * | their own needs, or customize new functions
  */
 
-static inline task_t __W_Series(USART_TypeDef * USARTx, const uint8_t array[], size_t len)
+/**
+ * @brief Continuously send multiple data
+ * 
+ * @param USARTx: defined in the stm32f103xx series header
+ * @param array: datas to send
+ * @param len: array length
+ * @return task_t: Success / Fail
+ */
+static inline task_t _InterfaceUSART_TxSeries(USART_TypeDef * USARTx, const uint8_t array[], size_t len)
 {
   for(size_t i = 0; i < len; ++i)
     while( _InterfaceUSART_TxByte(USARTx, array[i]) != Success ) { }
@@ -96,7 +109,15 @@ static inline task_t __W_Series(USART_TypeDef * USARTx, const uint8_t array[], s
   return Success;
 }
 
-static inline task_t __R_Series(USART_TypeDef * USARTx, volatile uint8_t array[], size_t len)
+/**
+ * @brief Continuously receive multiple data
+ * 
+ * @param USARTx: defined in the stm32f103xx series header
+ * @param array: buffer to receive datas
+ * @param len: array length
+ * @return task_t: Success / Fail
+ */
+static inline task_t _InterfaceUSART_RxSeries(USART_TypeDef * USARTx, volatile uint8_t array[], size_t len)
 {
   for(size_t i = 0; i < len; ++i) 
     while( _InterfaceUSART_RxByte(USARTx, &array[i]) != Success ) { }
