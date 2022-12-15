@@ -46,10 +46,11 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "common.h"
+#include "Common.h"
 #include "VL53L1X_api.h"
-#include "hc05.h"
-#include "buffer.h"
+#include "HC05.h"
+#include "Buffer.h"
+#include "VL53L1X.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -110,6 +111,11 @@ typedef struct {
 		uint8_t check;
 		uint16_t distance;
 		bool_t isTriggered;
+		
+		VL53L1X_DS * restrict dev;
+		Buffer_DS * rx;
+		Buffer_DS * tx;
+		bool_t needCallDevice;
 	} vl53l1x;
 	
 } App_DS;

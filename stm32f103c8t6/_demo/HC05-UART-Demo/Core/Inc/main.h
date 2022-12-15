@@ -44,7 +44,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "hc05.h"
+#include "HC05.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

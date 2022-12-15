@@ -1,5 +1,5 @@
 /**
- * @file hc05.h
+ * @file HC05.h
  * @author Zhang, Zhen Yu (https://github.com/TooLateToDieYoung)
  * @brief
  * @warning
@@ -20,7 +20,7 @@ extern "C"
 
 #include "InterfaceUSART.h"
 
-#ifndef USART_UNREADY
+#ifndef STM32F103xx_UNREADY
 
 /** Data Structure Begin ---------------------------------------------------------------
  * @brief class data sturcture
@@ -83,7 +83,7 @@ task_t HC05_RxByte(HC05_DS * const self, volatile uint8_t * byte, uint16_t timeo
 
 /* ---------------------------------------------------------------- Interface Code End */
 
-#endif // USART_UNREADY
+#endif // STM32F103xx_UNREADY
 
 #ifdef __cplusplus
 }

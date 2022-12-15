@@ -47,12 +47,12 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "common.h"
+#include "Common.h"
 #include "InterfaceUSART.h"
 #include "InterfaceI2C.h"
 #include "InterfaceSPI.h"
-#include "hc05.h"
-#include "lsm6ds3.h"
+#include "HC05.h"
+#include "LSM6DS3.h"
 #include "VL53L1X_api.h"
 //#include "vl53l1_platform.h"
 /* USER CODE END Includes */

@@ -149,9 +149,13 @@ int main(void)
 	
   while (1)
   {
+		
 		LL_mDelay(500);
+		
 		LL_GPIO_ResetOutputPin(SCS_GPIO_Port, SCS_Pin);
+		
 		if( _SPI_ReadRegister(0x0F) == 0x69 ) LL_GPIO_TogglePin(TEST_GPIO_Port, TEST_Pin);
+		
 		LL_GPIO_SetOutputPin(SCS_GPIO_Port, SCS_Pin);
     /* USER CODE END WHILE */
 
@@ -224,15 +228,15 @@ static void MX_SPI1_Init(void)
   PA6   ------> SPI1_MISO
   PA7   ------> SPI1_MOSI
   */
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_5|LL_GPIO_PIN_7;
+  GPIO_InitStruct.Pin = SCLK_Pin|MOSI_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_6;
+  GPIO_InitStruct.Pin = MISO_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  LL_GPIO_Init(MISO_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN SPI1_Init 1 */
 
@@ -244,7 +248,7 @@ static void MX_SPI1_Init(void)
   SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_HIGH;
   SPI_InitStruct.ClockPhase = LL_SPI_PHASE_2EDGE;
   SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
-  SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV8;
+  SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV16;
   SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
   SPI_InitStruct.CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE;
   SPI_InitStruct.CRCPoly = 10;
@@ -270,24 +274,24 @@ static void MX_GPIO_Init(void)
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
 
   /**/
-  LL_GPIO_SetOutputPin(GPIOC, LL_GPIO_PIN_13);
+  LL_GPIO_SetOutputPin(TEST_GPIO_Port, TEST_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_4);
+  LL_GPIO_ResetOutputPin(SCS_GPIO_Port, SCS_Pin);
 
   /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_13;
+  GPIO_InitStruct.Pin = TEST_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  LL_GPIO_Init(TEST_GPIO_Port, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_4;
+  GPIO_InitStruct.Pin = SCS_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  LL_GPIO_Init(SCS_GPIO_Port, &GPIO_InitStruct);
 
 }
 

@@ -47,10 +47,10 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "common.h"
-#include "buffer.h"
-#include "hc05.h"
-#include "lsm6ds3.h"
+#include "Common.h"
+#include "Buffer.h"
+#include "HC05.h"
+#include "LSM6DS3.h"
 
 /* USER CODE END Includes */
 

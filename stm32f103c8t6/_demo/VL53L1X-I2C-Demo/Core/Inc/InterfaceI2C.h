@@ -31,7 +31,7 @@ extern "C" {
 
 #ifndef I2C_UNREADY
 
-#include "common.h" // ask for some useful tools & typedef
+#include "Common.h" // ask for some useful tools & typedef
 
 // Definitions
 typedef enum { DirW = 0, DirR = 1 } I2C_DirectionRW_Enum;
