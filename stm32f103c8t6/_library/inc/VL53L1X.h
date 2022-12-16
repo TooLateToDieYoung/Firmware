@@ -33,7 +33,6 @@ extern "C"
     I2C_TypeDef *I2Cx;
 
     uint8_t address;
-    bool_t isAfterTx;
 
   } VL53L1X_DS;
 
@@ -63,66 +62,95 @@ extern "C"
    * @param self: object pointer
    * @return task_t: Success / Fail
    */
-  task_t VL53L1X_Destructor(VL53L1X_DS *self);
+  task_t VL53L1X_Destructor(VL53L1X_DS *const self);
 
-  /**
-   * @brief vl53l1x try to generate I2C start condition
-   *
+  /** 
+   * @brief Configure module with default values 
+   * 
    * @param self: object pointer
-   * @param timeout:
    * @return task_t: Success / Fail
    */
-  task_t VL53L1X_Start(VL53L1X_DS *const self, uint16_t timeout);
+  task_t VL53L1X_DefaultInit(VL53L1X_DS *const self);
 
   /**
-   * @brief
-   *
-   * @param self
-   * @param isRead
-   * @param timeout
-   * @return task_t
-   */
-  task_t VL53L1X_Device(VL53L1X_DS *const self, bool_t isRead, uint16_t timeout);
-
-  /**
-   * @brief
-   *
-   * @param self
-   * @param isAckNext
-   * @param timeout
-   * @return task_t
-   */
-  task_t VL53L1X_PreloadStatus(VL53L1X_DS *const self, bool_t isAckNext, uint16_t timeout);
-
-  /**
-   * @brief Transfer one byte
+   * @brief Continuously write multiple data to the specified device
    *
    * @param self: object pointer
-   * @param byte: byte to write
-   * @param timeout: set try times
+   * @param index: index register
+   * @param array: data to write
+   * @param len: length of array
    * @return task_t: Success / Fail
    */
-  task_t VL53L1X_TxByte(VL53L1X_DS *const self, const uint8_t byte, uint16_t timeout);
+  task_t VL53L1X_TxSeries(VL53L1X_DS *const self, uint16_t index, const uint8_t array[], size_t len);
 
   /**
-   * @brief Transfer one byte
+   * @brief Continuously read multiple data from the specified device
    *
    * @param self: object pointer
-   * @param byte: byte to save read data
-   * @param isAckNext: decide whether to generate ack for next rx bytes
-   * @param timeout: set try times
+   * @param index: index register
+   * @param array: data to recieve
+   * @param len: length of array
    * @return task_t: Success / Fail
    */
-  task_t VL53L1X_RxByte(VL53L1X_DS *const self, volatile uint8_t *const byte, bool_t isAckNext, uint16_t timeout);
+  task_t VL53L1X_RxSeries(VL53L1X_DS *const self, uint16_t index, volatile uint8_t array[], size_t len);
 
   /**
-   * @brief
-   *
+   * @brief Check if the module hardware is ready
+   * 
    * @param self: object pointer
-   * @param timeout: set try times
+   * @return bool_t: True / False
+   */
+  bool_t VL53L1X_isBootReady(VL53L1X_DS *const self);
+
+  /**
+   * @brief Enable module measurements
+   * 
+   * @param self: object pointer
+   * @return task_t: Success / Fail 
+   */
+  task_t VL53L1X_StartRanging(VL53L1X_DS *const self);
+
+  /**
+   * @brief Check if data is measured
+   * 
+   * @param self: object pointer
+   * @return bool_t: True / False
+   */
+  bool_t VL53L1X_isDataReady(VL53L1X_DS *const self);
+
+  /**
+   * @brief Get interrupt polarity to check data status
+   * 
+   * @param self: object pointer
+   * @param polarity: store state 
    * @return task_t: Success / Fail
    */
-  task_t VL53L1X_Stop(VL53L1X_DS *const self, bool_t isAfterTx, uint16_t timeout);
+  task_t VL53L1X_GetInterruptPolarity(VL53L1X_DS *const self, volatile uint8_t *const polarity);
+  
+  /**
+   * @brief Fetch distance
+   * 
+   * @param self: object pointer
+   * @param distance: store data
+   * @return task_t: Success / Fail
+   */
+  task_t VL53L1X_GetDistance(VL53L1X_DS *const self, volatile uint16_t *const distance);
+  
+  /**
+   * @brief Clear interrupt state
+   * 
+   * @param self: object pointer
+   * @return task_t: Success / Fail
+   */
+  task_t VL53L1X_ClearInterrupt(VL53L1X_DS *const self);
+  
+  /**
+   * @brief Disable module measurements
+   * 
+   * @param self: object pointer
+   * @return task_t: Success / Fail
+   */
+  task_t VL53L1X_StopRanging(VL53L1X_DS *const self);
 
   /* ---------------------------------------------------------------- Interface Code End */
 

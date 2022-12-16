@@ -92,6 +92,14 @@ extern "C"
    */
   task_t LSM6DS3_Destructor(LSM6DS3_DS *const self);
 
+  /** 
+   * @brief Configure module with default values 
+   * 
+   * @param self: object pointer
+   * @return task_t: Success / Fail
+   */
+  task_t LSM6DS3_DefaultInit(LSM6DS3_DS *const self);
+
   /**
    * @brief select device -> CS wire low
    *
@@ -105,26 +113,6 @@ extern "C"
    * @param self
    */
   void LSM6DS3_FreeDevice(LSM6DS3_DS *const self);
-
-  /**
-   * @brief Transfer one byte
-   *
-   * @param self: object pointer
-   * @param byte: byte to write
-   * @param timeout: set try times
-   * @return task_t: Success / Fail
-   */
-  task_t LSM6DS3_TxByte(LSM6DS3_DS *const self, const uint8_t byte, uint16_t timeout);
-
-  /**
-   * @brief Transfer one byte
-   *
-   * @param self: object pointer
-   * @param byte: byte to save read data
-   * @param timeout: set try times
-   * @return task_t: Success / Fail
-   */
-  task_t LSM6DS3_RxByte(LSM6DS3_DS *const self, volatile uint8_t *const byte, uint16_t timeout);
 
   /**
    * @brief write one byte into the register

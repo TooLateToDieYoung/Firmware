@@ -65,6 +65,19 @@ task_t LSM6DS3_Destructor(LSM6DS3_DS *const self)
   return Success;
 }
 
+task_t LSM6DS3_DefaultInit(LSM6DS3_DS *const self)
+{
+  uint8_t value = 0x60; // 412Hz only enable Acce.
+  do
+  {
+    value = 0x60;
+    LSM6DS3_setRegister(self, CTRL_ACCE,  value, 1000);
+    LSM6DS3_getRegister(self, CTRL_ACCE, &value, 1000);
+  } while (value != 0x60);
+
+  return Success;
+}
+
 void LSM6DS3_HoldDevice(LSM6DS3_DS *const self)
 {
   self->CS.GPIOx->BSRR = _BIT(self->CS.order) << 16;
@@ -73,28 +86,6 @@ void LSM6DS3_HoldDevice(LSM6DS3_DS *const self)
 void LSM6DS3_FreeDevice(LSM6DS3_DS *const self)
 {
   self->CS.GPIOx->BSRR = _BIT(self->CS.order);
-}
-
-task_t LSM6DS3_TxByte(LSM6DS3_DS *const self, const uint8_t byte, uint16_t timeout)
-{
-  do
-  {
-    if (_InterfaceSPI_TxByte(self->SPIx, byte) == Success)
-      return Success;
-  } while (timeout--);
-
-  return Fail;
-}
-
-task_t LSM6DS3_RxByte(LSM6DS3_DS *const self, volatile uint8_t *const byte, uint16_t timeout)
-{
-  do
-  {
-    if (_InterfaceSPI_RxByte(self->SPIx, byte) == Success)
-      return Success;
-  } while (timeout--);
-
-  return Fail;
 }
 
 task_t LSM6DS3_setRegister(LSM6DS3_DS *const self, const uint8_t reg, const uint8_t byte, uint16_t timeout)
@@ -130,7 +121,6 @@ task_t LSM6DS3_getRegister(LSM6DS3_DS *const self, const uint8_t reg, volatile u
 
   return result;
 }
-
 /* ---------------------------------------------------------------- Class Public Functions End */
 
 #endif // STM32F103xx_UNREADY
