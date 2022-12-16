@@ -1,0 +1,152 @@
+{
+  "main": {
+    "id": "d091a18367efcd48",
+    "type": "split",
+    "children": [
+      {
+        "id": "6c5b9645eaad3d1a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0d6ed3f6eff2de60",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "interface/InterfaceSPI.md",
+                "mode": "preview",
+                "source": false
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "d7dde7363f10a2c3",
+    "type": "split",
+    "children": [
+      {
+        "id": "6caac97e654cd46c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1f8b15f61936ebef",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "13002d42b293935b",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "26829dd7bc64b2ab",
+            "type": "leaf",
+            "state": {
+              "type": "starred",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "91d99e3f039b6919",
+    "type": "split",
+    "children": [
+      {
+        "id": "60bc16a0fafb9d41",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0e49f48f16c645a9",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "interface/InterfaceSPI.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "8fef423749368a45",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "interface/InterfaceSPI.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "da973903c9c42c2e",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "03b631e6ff0b8866",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "interface/InterfaceSPI.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "1f8b15f61936ebef",
+  "lastOpenFiles": [
+    "interface/InterfaceI2C.md",
+    "general/Buffer.md",
+    "general/Common.md",
+    "modules/LSM6DS3.md",
+    "modules/HC05.md",
+    "modules/VL53L1X.md",
+    "interface/InterfaceUSART.md",
+    "interface/InterfaceSPI.md",
+    "modules/Button.md",
+    "modules/SevenSegment.md"
+  ]
+}

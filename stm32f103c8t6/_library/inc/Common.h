@@ -25,7 +25,7 @@ extern "C"
  * @brief
  *
  */
-#define _BIT(offset) (1 << offset)
+#define _BIT(offset) (1U << (offset))
 #define _MASK(flag, bits) ((flag) & (bits))
 
   /**
@@ -51,6 +51,7 @@ extern "C"
     False = 0,
     True = !False
   } bool_t;
+
   typedef enum
   {
     Success = 0,
