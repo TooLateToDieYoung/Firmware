@@ -206,9 +206,6 @@ task_t VL53L1X_RxSeries(VL53L1X_DS *const self, uint16_t index, volatile uint8_t
     return Success;
 
   VL53L1X_TxSeries(self, index, 0, 0);
-  const uint8_t reg[2] = {
-      (_MASK(index, 0xFF00) >> 8),
-      (_MASK(index, 0x00FF) >> 0)};
 
   bool_t needAck = (len > 1) ? (True) : (False);
 

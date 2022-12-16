@@ -71,7 +71,7 @@ task_t LSM6DS3_DefaultInit(LSM6DS3_DS *const self)
   do
   {
     value = 0x60;
-    LSM6DS3_setRegister(self, CTRL_ACCE,  value, 1000);
+    LSM6DS3_setRegister(self, CTRL_ACCE, value, 1000);
     LSM6DS3_getRegister(self, CTRL_ACCE, &value, 1000);
   } while (value != 0x60);
 

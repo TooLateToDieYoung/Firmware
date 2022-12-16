@@ -1,7 +1,0 @@
-{
-  "files.associations": {
-    "interfacespi.h": "c",
-    "buffer.h": "c",
-    "lsm6ds3.h": "c"
-  }
-}

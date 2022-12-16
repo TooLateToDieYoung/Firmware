@@ -26,7 +26,6 @@ extern "C"
    * @warning Plz operate the object through the interface
    *
    */
-
   typedef struct
   {
 
