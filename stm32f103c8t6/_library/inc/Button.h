@@ -63,7 +63,7 @@ extern "C"
   task_t Button_Destructor(Button_DS *const self);
 
   /**
-   * @brief Transfer one byte
+   * @brief Check if button is free
    *
    * @param self: object pointer
    * @param byte: byte to write

@@ -63,7 +63,6 @@ Buffer_Destructor(buffer);
 >---
 
 > ## - Push 1 byte in
->> ### it automatically checks if the buffer size is exceeded. (queue-like)
 ```C
 /* 
   ? it automatically checks if the buffer size is exceeded. (queue-like) 
@@ -132,4 +131,4 @@ else
   // !pass
 }
 ```
->---
+---

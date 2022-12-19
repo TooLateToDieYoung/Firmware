@@ -105,7 +105,7 @@ extern "C"
   task_t SevenSegment_Set(SevenSegment_DS *const self, flag8_t segment);
 
   /**
-   * @brief Reset output(close it)
+   * @brief Reset output (close it)
    * 
    * @param self: object pointer  
    * @return task_t: Success / Fail

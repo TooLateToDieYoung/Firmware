@@ -1,7 +1,8 @@
 /**
  * @file VL53L1X.h
- * @author your name (you@domain.com)
+ * @author Zhang, Zhen Yu (https://github.com/TooLateToDieYoung)
  * @brief
+ * @warning
  * @version 0.1
  * @date 2022-12-01
  *
