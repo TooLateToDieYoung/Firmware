@@ -3,7 +3,7 @@
  * @author Zhang, Zhen Yu (https://github.com/TooLateToDieYoung)
  * @brief
  * | People who use this library can easily realize \n
- * | their own I2C read / write functions via these interfaces.
+ * | their own UART read / write functions via these interfaces.
  * | All the functions wrapped in the "interface" \n
  * | can be called from the main thread or interrupts.
  *

@@ -13,6 +13,14 @@
 
 ---
 
+# Dependent Header Files
+> ## - Provides the base type and namespace of the device
+```C
+#include "Common.h" // ? check for namespace: STM32F103xx_UNREADY
+```
+
+---
+
 # Data Structure
 > ## Hidden implementation, can only be operated through API.
 ```C
@@ -31,107 +39,97 @@ struct Buffer_DS
 
 # API
 > ## - Constructor
->> ### user has to check if return value is NULL
 ```C
-/**
- * @brief Constructor (dynamic memory)
- *
- * @param size: max length for buffer
- * @return Buffer_DS*: dynamic memory pointer
- */
-Buffer_DS *Buffer_Constructor(size_t size);
+const size_t length = 10; 
+
+Buffer_DS * restrict buffer = Buffer_Constructor(length);
+
+if( !buffer ) // dynamic memory fail
+{
+  // ! Error Handling
+}
 ```
 >---
 
 > ## - Destructor
 ```C
-/**
- * @brief Destructor
- *
- * @param self: object pointer
- * @return task_t: Success / Fail
- */
-task_t Buffer_Destructor(Buffer_DS *self);
+/*
+  ? It's just a reserve function, \n
+  | because heap pointer should be auto reset after restart power.
+*/
+
+Buffer_Destructor(buffer); 
 ```
 >---
 
 > ## - Push 1 byte in
 >> ### it automatically checks if the buffer size is exceeded. (queue-like)
 ```C
-/**
- * @brief push byte into buffer
- *
- * @param self: object pointer
- * @param byte: byte to push in
- * @return task_t: Success / Fail
- */
-task_t Buffer_Push(Buffer_DS *const self, const uint8_t byte);
+/* 
+  ? it automatically checks if the buffer size is exceeded. (queue-like) 
+*/
+
+if( Buffer_Push(buffer, data) != Success ) // If buffer is full
+{
+  // ! Error Handling
+}
 ```
 >---
 
 > ## - Pop up 1 byte
->> ### it automatically checks if the buffer is already empty. (queue-like)
 ```C
-/**
- * @brief pop current head in this buffer
- *
- * @param self: object pointer
- * @param byte: data to save result
- * @return task_t: Success / Fail
- */
-task_t Buffer_Take(Buffer_DS *const self, volatile uint8_t *byte);
+/*
+  ? it automatically checks if the buffer is already empty. (queue-like)
+*/
+
+volatile uint8_t result = 0;
+
+if( Buffer_Take(buffer, &result) != Success ) // If buffer is empty
+{
+  // ! Error Handling
+}
 ```
 >---
 
 > ## - Peek the index byte
->> ### it automatically checks if the buffer size is exceeded. (array-like)
 ```C
-/**
- * @brief peek the index data of buffer
- *
- * @param self: object pointer
- * @param index: order
- * @param byte: data to save result
- * @return task_t: Success / Fail
- */
-task_t Buffer_Index(Buffer_DS *const self, const size_t index, volatile uint8_t *byte);
+/* 
+  ? it automatically checks if the buffer size is exceeded. (queue-like) 
+*/
+
+volatile uint8_t peek = 0;
+
+if( Buffer_Index(buffer, &peek) != Success ) // If index is out of buffer length
+{
+  // ! Error Handling
+}
 ```
 >---
 
-> ## - Clear whole buffer datas
+> ## - Clear whole buffer data
 ```C
-/**
- * @brief clear whole buffer datas
- *
- * @param self: object pointer
- * @return task_t: Success / Fail
- */
-task_t Buffer_Flush(Buffer_DS *const self);
+Buffer_Flush(buffer);
 ```
 >---
 
 > ## - Get current buffer length
 ```C
-/**
- * @brief get current buffer length
- *
- * @param self: object pointer
- * @return size_t: current length
- */
-size_t Buffer_Length(Buffer_DS *const self);
+const size_t currLength = Buffer_Length(buffer);
 ```
 >---
 
 > ## - Compare end data
 ```C
-/**
- * @brief check for items at the ends of buffer
- *
- * @param self: object pointer
- * @param compare: check bytes
- * @param len: length of check bytes
- * @return bool_t: True / False
- */
-bool_t Buffer_isEndAs(Buffer_DS *const self, const uint8_t compare[], size_t len);
+const size_t  checkLength = 4;
+const uint8_t checkTable[checkLength] = { 0xAA, 0x55, 0xAA, 0x55 };
+
+if( Buffer_isEndAs(buffer, checkTable, checkLength) )
+{
+  // pass
+}
+else
+{
+  // !pass
+}
 ```
 >---

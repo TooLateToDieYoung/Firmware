@@ -5,9 +5,8 @@
 
 # Tools
 > ## - C-like namespace
->> ### all files have to check this forward definition.
 ```C
-#define STM32F103xx_UNREADY
+#define STM32F103xx_UNREADY // ! all files have to check this forward definition.
 #warning "This library must be working under stm32f103xx series"
 ```
 >---
@@ -25,8 +24,8 @@
 >---
 
 > ## - Boolean typedef
->> ### defined with an enum to avoid conflicts
 ```C
+// ? Defined with an enum to avoid conflicts.
 typedef enum
 {
   False = 0,
@@ -36,8 +35,8 @@ typedef enum
 >---
 
 > ## - Task result typedef
->> ## for communication between modules or interrupt missions.
 ```C
+// ? For communication between modules or interrupt missions.
 typedef enum
 {
   Success = 0,
@@ -47,8 +46,8 @@ typedef enum
 >---
 
 > ## - GPIO port & pin typedef
->> ## an easier way to bind ports and pins to pass arguments as functions
 ```C
+// ? An easier way to bind ports and pins to pass arguments as functions
 typedef struct
 {
   GPIO_TypeDef *GPIOx;
