@@ -1,3 +1,7 @@
+# _diagram files
+*.bkp
+*.drawio
+
 # _documents files
 
 # _tools files
